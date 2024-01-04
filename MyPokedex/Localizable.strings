@@ -1,0 +1,17 @@
+/* 
+  Localizable.strings
+  MyPokedex
+
+  Created by Andres Perez Ramirez on 27/11/23.
+  
+*/
+"abilitiesLabel" = "Abilities";
+"continueButton" = "Continue" ;
+"filterLabel" = "Filter By" ;
+"mainDescription" = "Use the advanced search to find Pokémon by type, weakness, ability and more!";
+"mainTitle" = "Pokédex";
+"movesLabel" = "Moves";
+"networkConnectionMessage" = "The network connection is offline.";
+"searchPlaceHolder" = "Search a pokémon";
+"unexpectedErrorMessage" = "Unexpected error has ocurred";
+"unexpectedErrorMessage" = "Unexpected error has ocurred";
