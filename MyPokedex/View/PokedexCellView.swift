@@ -18,7 +18,7 @@ struct PokedexCellView<Model>: View where Model: PokedexCellViewModelProtocol {
 
     var body: some View {
         NavigationView {
-            let color = Color.pokemon(species: viewModel.pokemon?.types.first)
+            let color = Color.pokemon(species: viewModel.pokemon?.types?.first)
             ZStack(alignment: .bottomTrailing) {
                 pokeballBackground
                 VStack {
@@ -70,7 +70,7 @@ struct PokedexCellView<Model>: View where Model: PokedexCellViewModelProtocol {
         HStack {
             types
             Spacer()
-            if let url = URL(string: viewModel.pokemon?.sprites.url ?? "") {
+            if let url = URL(string: viewModel.pokemon?.sprites?.url ?? "") {
                 KFImage(url)
                     .placeholder {
                         ProgressView()

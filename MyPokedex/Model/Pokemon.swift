@@ -10,10 +10,10 @@ import Foundation
 struct Pokemon: Decodable {
     let id: Int
     let name: String
-    let sprites: Sprite
-    let abilities: [Ability]
-    let moves: [Move]
-    let types: [Species]
+    let sprites: Sprite?
+    let abilities: [Ability]?
+    let moves: [Move]?
+    let types: [Species]?
 }
 
 extension Pokemon: Hashable, Equatable {
@@ -29,7 +29,7 @@ extension Pokemon: Hashable, Equatable {
 
 
 struct Sprite: Decodable {
-    let url: String
+    let url: String?
 
     private enum CodingKeys: String, CodingKey {
         case url = "front_default"

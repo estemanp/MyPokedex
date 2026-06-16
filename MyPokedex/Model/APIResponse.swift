@@ -8,7 +8,9 @@
 import Foundation
 
 struct APIResponse: Decodable {
-    let next: String
+    let count: Int
+    let next: String?
+    let previous: String?
     let results: [RowDetail]
 }
 

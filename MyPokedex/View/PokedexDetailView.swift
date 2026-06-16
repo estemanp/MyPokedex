@@ -18,13 +18,13 @@ struct PokedexDetailView<Model>: View where Model: PokedexDetailViewModelProtoco
 
     var body: some View {
         NavigationView {
-            let color = Color.pokemon(species: viewModel.pokemon?.types.first)
+            let color = Color.pokemon(species: viewModel.pokemon?.types?.first)
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     VStack {
                         pokemonName
                         Spacer()
-                        if let url = URL(string: viewModel.pokemon?.sprites.url ?? "") {
+                        if let url = URL(string: viewModel.pokemon?.sprites?.url ?? "") {
                             KFImage(url)
                                 .placeholder {
                                     ProgressView()

@@ -77,17 +77,17 @@ final class PokedexViewModel: PokedexViewModelProtocol {
     }
     
     func onAppearSetup() {
-            fetchPokemons(isFilter: false)
-            
-            Task {
-                do {
-                    let response = try await repository.fetchAPIResponse(limit: "2000", offset: "0")
-                    self.fullPokemonDirectory = response.results
-                } catch {
-                    print("The search directory could not be downloaded")
-                }
+        fetchPokemons(isFilter: false)
+        
+        Task {
+            do {
+                let response = try await repository.fetchAPIResponse(limit: "2000", offset: "0")
+                self.fullPokemonDirectory = response.results
+            } catch {
+                print("Directory download error: \(error)")
             }
         }
+    }
 
     func fetchPokemonsIfNeeded(index: Int) {
         guard selectedType == PokemonType.none.rawValue, searchText.isEmpty else { return }

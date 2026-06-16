@@ -8,11 +8,11 @@
 import Foundation
 
 protocol PokemonCacheProtocol: Actor {
-    func getAPIResponse(offset: String) -> APIResponse?
+    func getAPIResponse(limit: String, offset: String) -> APIResponse?
     func getPokemon(name: String) -> Pokemon?
     func getAPITypeResponse(type: String) -> APITypeResponse?
     
-    func saveAPIResponse(offset: String, response: APIResponse)
+    func saveAPIResponse(limit: String, offset: String, response: APIResponse)
     func savePokemon(pokemon: Pokemon)
     func saveAPITypeResponse(type: String, response: APITypeResponse)
 }
@@ -27,8 +27,9 @@ actor PokemonCache: PokemonCacheProtocol {
     
     private init() {}
     
-    func getAPIResponse(offset: String) -> APIResponse? {
-        return apiResponseCache[offset]
+    func getAPIResponse(limit: String, offset: String) -> APIResponse? {
+        let key = "\(limit)-\(offset)"
+        return apiResponseCache[key]
     }
     
     func getPokemon(name: String) -> Pokemon? {
@@ -39,8 +40,9 @@ actor PokemonCache: PokemonCacheProtocol {
         return apiTypeResponseCache[type]
     }
     
-    func saveAPIResponse(offset: String, response: APIResponse) {
-        apiResponseCache[offset] = response
+    func saveAPIResponse(limit: String, offset: String, response: APIResponse) {
+        let key = "\(limit)-\(offset)"
+        apiResponseCache[key] = response
     }
     
     func savePokemon(pokemon: Pokemon) {

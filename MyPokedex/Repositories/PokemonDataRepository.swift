@@ -24,11 +24,14 @@ struct PokemonDataRepository: PokemonRepositoryProtocol {
     }
     
     func fetchAPIResponse(limit: String, offset: String) async throws -> APIResponse {
-        if let cachedResponse = await cache.getAPIResponse(offset: offset) {
+        if let cachedResponse = await cache.getAPIResponse(limit: limit, offset: offset) {
             return cachedResponse
         }
+        
         let networkResponse = try await apiService.fetchAPIResponse(limit: limit, offset: offset)
-        await cache.saveAPIResponse(offset: offset, response: networkResponse)
+        
+        await cache.saveAPIResponse(limit: limit, offset: offset, response: networkResponse)
+        
         return networkResponse
     }
     
