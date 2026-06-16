@@ -128,9 +128,9 @@ struct PokedexDetailView<Model>: View where Model: PokedexDetailViewModelProtoco
 struct PokedexDetailView_Previews: PreviewProvider {
     static var previews: some View {
         PokedexDetailView(viewModel: MockPokedexDetailViewModel(
-            pokemon: .init(name: "", url: ""),
-            pokemonAPIService: PokemonLoadingAPIService(cache: PokemonCache.shared,
-                                                        apiService: PokemonAPI())))
-          .previewLayout(.fixed(width: 400, height: 200))
+            pokemon: .init(name: "bulbasaur", url: "https://pokeapi.co/api/v2/pokemon/1/"),
+            repository: PokemonDataRepository()
+        ))
+        .previewLayout(.fixed(width: 400, height: 200))
     }
 }

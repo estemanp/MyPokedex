@@ -6,9 +6,9 @@
 //
 
 import Foundation
-import Combine
 import Network
 
+@MainActor
 protocol PokedexViewModelProtocol: ObservableObject {
     var pokemonList: [RowDetail] { get set }
     var searchText: String { get set }
@@ -17,22 +17,39 @@ protocol PokedexViewModelProtocol: ObservableObject {
     var showUnexpectedErrorAlert: Bool { get set }
     var mainTitle: String { get }
     var mainDescription: String { get }
-    init(pokemonAPIService: PokemonAPIService)
+    
+    init(repository: PokemonRepositoryProtocol)
+    
+    func onAppearSetup()
     func fetchPokemonsIfNeeded(index: Int)
     func fetchPokemons(isFilter: Bool)
     func fetchAPITypeResponse()
-    
+    func searchPokemon()
 }
 
-
+@MainActor
 final class PokedexViewModel: PokedexViewModelProtocol {
     @Published var pokemonList: [RowDetail]
-    @Published var searchText: String
+    @Published var searchText: String = "" {
+        didSet {
+            if searchText.isEmpty {
+                resetAndFetchList()
+            } else {
+                self.pokemonList = fullPokemonDirectory.filter {
+                    $0.name.lowercased().contains(searchText.lowercased())
+                }
+            }
+        }
+    }
+    
     @Published var selectedType: String
     @Published var showFilter: Bool
     @Published var showUnexpectedErrorAlert: Bool
-    private var subsriptions = Set<AnyCancellable>()
-    private let pokemonAPIService: PokemonAPIService
+        
+    private var fullPokemonDirectory: [RowDetail] = []
+    
+    private let repository: PokemonRepositoryProtocol
+    
     private let limit: Int
     private let totalMaxItemsAvailable: Int
     private let itemsFromEndThreshold: Int
@@ -46,8 +63,8 @@ final class PokedexViewModel: PokedexViewModelProtocol {
         return LocalizableString.mainDescription.value
     }
 
-    required init(pokemonAPIService: PokemonAPIService) {
-        self.pokemonAPIService = pokemonAPIService
+    required init(repository: PokemonRepositoryProtocol) {
+        self.repository = repository
         self.pokemonList = [RowDetail]()
         self.searchText = ""
         self.selectedType = PokemonType.none.rawValue
@@ -58,66 +75,88 @@ final class PokedexViewModel: PokedexViewModelProtocol {
         self.itemsFromEndThreshold = 4
         self.totalMaxItemsAvailable = 1020
     }
+    
+    func onAppearSetup() {
+            fetchPokemons(isFilter: false)
+            
+            Task {
+                do {
+                    let response = try await repository.fetchAPIResponse(limit: "2000", offset: "0")
+                    self.fullPokemonDirectory = response.results
+                } catch {
+                    print("The search directory could not be downloaded")
+                }
+            }
+        }
 
     func fetchPokemonsIfNeeded(index: Int) {
-        guard selectedType == PokemonType.none.rawValue else { return }
+        guard selectedType == PokemonType.none.rawValue, searchText.isEmpty else { return }
+        
         if shouldRequestMoreItems(index) && canRequestMoreItems() {
             fetchPokemons(isFilter: false)
         }
     }
 
     func fetchPokemons(isFilter: Bool) {
-        pokemonAPIService
-            .fetchAPIResponse(limit: String(limit), offset: String(offSet))
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] value in
-                switch value {
-                case .failure(let error):
-                    print("Failure error:", error.localizedDescription)
-                    print("MY error: ", error)
-                    self?.showUnexpectedErrorAlert = true
-                case .finished:
-                    break
-                }
-            } receiveValue: { [weak self] response in
-                guard let self = self else { return }
+        Task {
+            do {
+                let response = try await repository.fetchAPIResponse(limit: String(limit), offset: String(offSet))
+                
                 self.showUnexpectedErrorAlert = false
+                
                 if isFilter {
                     self.pokemonList = response.results
                     self.offSet = limit
                 } else {
                     self.pokemonList.append(contentsOf: response.results)
-                    self.pokemonAPIService.saveAPIResponse(offSet: String(offSet), apiResponse: response)
                     self.offSet += self.limit
                 }
+            } catch {
+                print("Failure error: \(error.localizedDescription)")
+                self.showUnexpectedErrorAlert = true
             }
-            .store(in: &subsriptions)
+        }
     }
 
     func fetchAPITypeResponse() {
         if selectedType == PokemonType.none.rawValue {
             fetchPokemons(isFilter: true)
         } else {
-            pokemonAPIService
-                .fetchAPITypeResponse(type: selectedType)
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] value in
-                    switch value {
-                    case .failure(let error):
-                        self?.pokemonList = []
-                        print("Failure error:", error.localizedDescription)
-                        print("MY error: ", error)
-                    case .finished:
-                        break
-                    }
-                } receiveValue: { [weak self] response in
-                    guard let self = self else { return }
-                    self.pokemonAPIService.SaveAPITypeResponse(type: selectedType, apyTypeResponse: response)
-                    self.pokemonList = response.pokemonList.map{ $0.pokemon }
+            Task {
+                do {
+                    let response = try await repository.fetchAPITypeResponse(type: selectedType)
+                    self.pokemonList = response.pokemonList.map { $0.pokemon }
                     self.offSet = 0
+                } catch {
+                    self.pokemonList = []
+                    print("Failure error: \(error.localizedDescription)")
                 }
-                .store(in: &subsriptions)
+            }
         }
+    }
+        
+    func searchPokemon() {
+        guard !searchText.isEmpty else { return }
+        
+        Task {
+            do {
+                let result = try await repository.fetchPokemon(name: searchText)
+                
+                let searchedPokemon = RowDetail(name: result.name, url: "https://pokeapi.co/api/v2/pokemon/\(result.id)/")
+                
+                self.pokemonList = [searchedPokemon]
+                self.showUnexpectedErrorAlert = false
+            } catch {
+                print("Pokemon no encontrado: \(searchText)")
+                self.pokemonList = []
+            }
+        }
+    }
+    
+    private func resetAndFetchList() {
+        self.offSet = 0
+        self.pokemonList.removeAll()
+        fetchPokemons(isFilter: true)
     }
 
     private func shouldRequestMoreItems( _ index: Int) -> Bool {

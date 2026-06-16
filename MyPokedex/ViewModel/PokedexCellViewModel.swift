@@ -6,24 +6,27 @@
 //
 
 import Foundation
-import Combine
 
+@MainActor
 protocol PokedexCellViewModelProtocol: ObservableObject {
     var pokemon: Pokemon? { get set }
     var showingUnexpectedErrorAlert: Bool { get set }
     var number: String { get }
     var species: [Species] { get }
-    init(pokemon: RowDetail, pokemonAPIService: PokemonAPIService)
+    
+    init(pokemon: RowDetail, repository: PokemonRepositoryProtocol)
     func fetchPokemon()
 }
 
+@MainActor
 class PokedexCellViewModel: PokedexCellViewModelProtocol {
+    
     @Published var pokemon: Pokemon?
-    @Published var showingUnexpectedErrorAlert: Bool
+    @Published var showingUnexpectedErrorAlert: Bool = false
+    
     private var namePokemon: String
-    private var subsriptions = Set<AnyCancellable>()
-    private let pokemonAPIService: PokemonAPIService
-
+    
+    private let repository: PokemonRepositoryProtocol
 
     var number: String {
         guard let id = pokemon?.id else { return "" }
@@ -31,36 +34,24 @@ class PokedexCellViewModel: PokedexCellViewModelProtocol {
     }
 
     var species: [Species] {
-        guard let species = pokemon?.types else { return [] }
-        return species
+        return pokemon?.types ?? []
     }
 
-    required init(pokemon: RowDetail, pokemonAPIService: PokemonAPIService) {
+    required init(pokemon: RowDetail, repository: PokemonRepositoryProtocol) {
         self.namePokemon = pokemon.name
-        self.pokemonAPIService = pokemonAPIService
-        self.showingUnexpectedErrorAlert = false
+        self.repository = repository
     }
 
     func fetchPokemon() {
-        pokemonAPIService
-            .fetchPokemon(name: namePokemon)
-            .receive(on: DispatchQueue.main)
-            .sink {[weak self] value in
-                switch value {
-                case .failure(let error):
-                    print("Failure error:", error.localizedDescription)
-                    print("MY error: ", error)
-                    self?.showingUnexpectedErrorAlert = true
-                case .finished:
-                    break
-                }
-            } receiveValue: { [weak self] pokemon in
-                guard let self = self else { return }
+        Task {
+            do {
+                let fetchedPokemon = try await repository.fetchPokemon(name: namePokemon)
+                self.pokemon = fetchedPokemon
                 self.showingUnexpectedErrorAlert = false
-
-                self.pokemonAPIService.savePokemon(pokemon: pokemon)
-                self.pokemon = pokemon
+            } catch {
+                print("Failure error: \(error.localizedDescription)")
+                self.showingUnexpectedErrorAlert = true
             }
-            .store(in: &subsriptions)
+        }
     }
 }

@@ -10,8 +10,9 @@ import SwiftUI
 @main
 struct MyPokedexApp: App {
     @StateObject private var networkMonitor = NetworkMonitor()
-    private let viewModel = PokedexViewModel(pokemonAPIService: PokemonLoadingAPIService(cache: PokemonCache.shared,
-                                                                                         apiService: PokemonAPI()))
+    
+    private let viewModel = PokedexViewModel(repository: PokemonDataRepository())
+    
     var body: some Scene {
         WindowGroup {
             PokedexView(viewModel: viewModel)

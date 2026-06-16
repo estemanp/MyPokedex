@@ -12,20 +12,19 @@ enum PokemonRouter {
     case pokedexCellView(pokemon: RowDetail)
     case pokedexDetailView(pokemon: RowDetail)
 
+    @MainActor
     func makeView() -> some View {
+        
+        let repository = PokemonDataRepository()
+        
         switch self {
         case .pokedexCellView(let pokemon):
-            let viewModel = PokedexCellViewModel(pokemon: pokemon,
-                                                 pokemonAPIService: PokemonLoadingAPIService(cache: PokemonCache.shared,
-                                                                                             apiService: PokemonAPI()))
-            let view = PokedexCellView(viewModel: viewModel)
-            return AnyView(view)
+            let viewModel = PokedexCellViewModel(pokemon: pokemon, repository: repository)
+            return AnyView(PokedexCellView(viewModel: viewModel))
+            
         case .pokedexDetailView(let pokemon):
-            let viewModel = PokedexDetailViewModel(pokemon: pokemon,
-                                                   pokemonAPIService: PokemonLoadingAPIService(cache: PokemonCache.shared,
-                                                                                               apiService: PokemonAPI()))
-            let view = PokedexDetailView(viewModel: viewModel)
-            return AnyView(view)
+            let viewModel = PokedexDetailViewModel(pokemon: pokemon, repository: repository)
+            return AnyView(PokedexDetailView(viewModel: viewModel))
         }
     }
 }

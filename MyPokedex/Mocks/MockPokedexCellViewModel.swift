@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 class MockPokedexCellViewModel: PokedexCellViewModelProtocol {
     @Published var pokemon: Pokemon?
     @Published var showingUnexpectedErrorAlert: Bool
@@ -27,7 +28,7 @@ class MockPokedexCellViewModel: PokedexCellViewModelProtocol {
         return types
     }
 
-    required init(pokemon: RowDetail, pokemonAPIService: PokemonAPIService) {
+    required init(pokemon: RowDetail, repository: PokemonRepositoryProtocol) {
         self.pokemon = .init(
             id: 1,
             name: "bulbasaur",

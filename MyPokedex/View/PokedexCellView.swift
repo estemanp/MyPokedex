@@ -95,12 +95,11 @@ struct PokedexCellView<Model>: View where Model: PokedexCellViewModelProtocol {
 }
 
 struct PokedexCellView_Previews: PreviewProvider {
-
     static var previews: some View {
         PokedexCellView(viewModel: MockPokedexCellViewModel(
-            pokemon: .init(name: "", url: ""),
-            pokemonAPIService: PokemonLoadingAPIService(cache: PokemonCache.shared,
-                                                        apiService: PokemonAPI())))
+            pokemon: .init(name: "bulbasaur", url: "https://pokeapi.co/api/v2/pokemon/1/"),
+            repository: PokemonDataRepository()
+        ))
         .previewLayout(.fixed(width: 400, height: 200))
     }
 }
